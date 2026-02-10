@@ -23,7 +23,7 @@ export const findById = async ({ model, id, options = {} }) => {
 }
 
 export const findByIdAndUpdate = async ({ model, id, data, options = {} }) => {
-    const doc = model.findByIdAndUpdate(id, data, { new: true, ...options })
+    const doc = model.findByIdAndUpdate(id, data, { new: true })
     if (options.select) doc.select(options.select)
     return await doc.exec()
 }
