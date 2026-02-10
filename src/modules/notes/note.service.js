@@ -3,6 +3,7 @@ import userModel from './../../DB/models/user.model.js';
 import * as db_service from "../../DB/db.service.js"
 import successResponse from './../../common/utils/successResponse.js';
 import checkOwner from "../../common/utils/checkOwner.js";
+import findUser from "../../common/utils/findUser.js";
 import { Types } from "mongoose";
 
 // ----------------------------------- create ------------------------------------------
@@ -13,8 +14,7 @@ export const createNote = async (req, res) => {
     if (!title || !content)
         throw new Error('title & content required', { cause: 400 })
 
-    if (!await db_service.findById({ model: userModel, id: req.decodedToken.data }))
-        throw new Error('user not exist', { cause: 404 })
+    await findUser({ userModel, id: req.decodedToken.data })
 
     const note = await db_service.create({ model: noteModel, data: { title, content, userId: req.decodedToken.data } })
 
@@ -48,8 +48,7 @@ export const replaceNote = async (req, res) => {
 export const updateAllTitle = async (req, res) => {
     const { title } = req.body
 
-    if (!await db_service.findById({ model: userModel, id: req.decodedToken.data }))
-        throw new Error('user not exist', { cause: 404 })
+    await findUser({ userModel, id: req.decodedToken.data })
 
     const notes = await db_service.updateMany({ model: noteModel, filter: { userId: req.decodedToken.data }, data: { title } })
 
@@ -93,8 +92,7 @@ export const getNoteByContent = async (req, res) => {
 }
 
 export const getNoteWithUser = async (req, res) => {
-    if (!await db_service.findById({ model: userModel, id: req.decodedToken.data }))
-        throw new Error('user not exist', { cause: 404 })
+    await findUser({ userModel, id: req.decodedToken.data })
 
     const notes = await db_service.find({
         model: noteModel,
@@ -118,8 +116,7 @@ export const paginateSort = async (req, res) => {
     const limit = Math.max(1, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
 
-    if (!await db_service.findById({ model: userModel, id: req.decodedToken.data }))
-        throw new Error('user not exist', { cause: 404 })
+    await findUser({ userModel, id: req.decodedToken.data })
 
     const notes = await db_service.find({ model: noteModel, filter: { userId: req.decodedToken.data }, options: { limit, skip, sort: { createdAt: -1 } } })
 

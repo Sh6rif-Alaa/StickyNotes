@@ -4,6 +4,7 @@ import * as db_services from "../../DB/db.service.js"
 import { decrypt, encrypt } from "../../common/security/encrypt.security.js"
 import { Compare, Hash } from './../../common/security/hash.security.js'
 import { jwtToken } from './../../common/token/jwt.token.js'
+import findUser from "../../common/utils/findUser.js"
 
 
 export const signUp = async (req, res) => {
@@ -52,13 +53,15 @@ export const updateUser = async (req, res) => {
 
     if (phone) updateData.phone = encrypt({ text: phone });
 
-    const user = await db_services.findByIdAndUpdate({ model: userModel, id: req.decodedToken.data, data: updateData })
+    const user = await db_services.findByIdAndUpdate({ model: userModel, id: req.decodedToken.data, data: updateData, options: { select: '-password' } })
+
+    if (!user) throw new Error("user not exist", { cause: 404 })
 
     successResponse({ res, data: { ...user._doc, phone: decrypt({ cipherText: user.phone }) }, message: "updated" })
 }
 
 export const deleteUser = async (req, res) => {
-    const user = await db_services.findByIdAndDelete({ model: userModel, id: req.decodedToken.data })
+    const user = await db_services.findByIdAndDelete({ model: userModel, id: req.decodedToken.data, options: { select: '-password' } })
 
     if (!user) throw new Error("user not exist", { cause: 404 })
 
@@ -66,9 +69,7 @@ export const deleteUser = async (req, res) => {
 }
 
 export const getUser = async (req, res) => {
-    const user = await db_services.findById({ model: userModel, id: req.decodedToken.data })
-
-    if (!user) throw new Error("user not exist", { cause: 404 })
+    const user = await findUser({ userModel, id: req.decodedToken.data })
 
     successResponse({ res, data: user })
 }
